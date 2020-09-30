@@ -1,0 +1,4 @@
+conf.list
+parameters.yaml
+*-openrc.sh
+*.pem

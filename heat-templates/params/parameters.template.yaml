@@ -1,0 +1,22 @@
+parameter_defaults:
+  key_name: dev-infra
+  public_network: ext-net-z2
+  bastion_infra: "$BASTION_INFRA_IP"
+  volume_type: vsa-z2
+  image_id: "debian9-mi-latest" #"debian9-mi-20200212" #"debian10-mi-20200609"
+  instance_type: "z2.small" #z2.standard-pi-4.8
+  # secret
+  os_storage_url: "$OS_STORAGE_URL"
+  os_auth_token: "$OS_AUTH_TOKEN"
+  http_proxy: "$OS_HTTP_PROXY"
+  https_proxy: "$OS_HTTPS_PROXY"
+  no_proxy: "$OS_NO_PROXY"
+
+  data_volume_id: "$DATA_VOLUME_ID"
+
+  data_storage: storage
+  data_storage_token: token
+
+  dns_nameservers: ""$DNS_SERVERNAME""
+
+  app_version: feat/swift-support
