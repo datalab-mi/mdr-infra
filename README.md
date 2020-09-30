@@ -9,9 +9,9 @@ TODO: Créer un bastion pour le projet.
  Makefile : Contient les commandes et variables du projet.<br />
  |_ tools.<br />
  |_ heat-templates.<br />
-  |_ config-script.<br />
-    |_ back_postconf.sh **Configure le serveur et installe docker**.<br />
-    |_ launch.sh **Lance le code applicatif**.<br />
+  &nbsp;|_ config-script.<br />
+    &nbsp;&nbsp;|_ back_postconf.sh **Configure le serveur et installe docker**.<br />
+    &nbsp;&nbsp;|_ launch.sh **Lance le code applicatif**.<br />
 
 ## Prérequis
  - Dans un tenant OpenStack, créez un projet.
