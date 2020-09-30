@@ -10,14 +10,14 @@ TODO: Créer un bastion pour le projet.
  |_ tools.<br />
  |_ heat-templates.<br />
   |_ config-script.<br />
-    |_ back_postconf.sh **Configure le serveur et installe docker**
-    |_ launch.sh **Lance le code applicatif**
+    |_ back_postconf.sh **Configure le serveur et installe docker**.<br />
+    |_ launch.sh **Lance le code applicatif**.<br />
 
 ## Prérequis
- - Dans un tenant OpenStack, créer un projet.
- - Créer un volume persistant.
- - Télécharger à la racine le fichier openrc.sh du projet.
- - Ajouter à ce fichier les exports :
+ - Dans un tenant OpenStack, créez un projet.
+ - Créez un volume persistant.
+ - Téléchargez à la racine le fichier openrc.sh du projet.
+ - Ajoutez à ce fichier les exports :
  ```export BASTION_INFRA_IP="ip_bastion"
  export OS_HTTP_PROXY="http://username:passwd@ip_proxy:port"
  export OS_HTTPS_PROXY="http://username:passwd@ip_proxy:port"
@@ -25,8 +25,8 @@ TODO: Créer un bastion pour le projet.
  export DNS_SERVERNAME="ip1,ip2,..."
  export DATA_VOLUME_ID="id"
  ```
- - Sourcer le fichier: `source openrc.sh`
- - Créer une paire de clefs pour la connexion ssh : `make keypair-create`
+ - Sourcez le fichier: `source openrc.sh`
+ - Générez une paire de clefs pour la connexion ssh : `make keypair-create`
 
 ## Commandes utiles
  - Construire le fichier de paramètre heat : `make heat-params`
