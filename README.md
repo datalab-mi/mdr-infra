@@ -1,4 +1,4 @@
-_Dépot boite à outils pour déployer un environement de dev avec openstack_
+_Dépot pour déployer un environement de prod pour le moteur de recherche avec openstack_
 
 Architecture :
 

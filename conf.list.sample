@@ -1,0 +1,2 @@
+export openstack_args=--insecure
+export stack_name=mdr
