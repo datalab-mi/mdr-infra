@@ -18,27 +18,17 @@ parameters:
   public_network:
     type: string
     description: ID reseau public
-    default: babar
+    default: Ext-Net
 
-  dns_nameservers:
-    type: comma_delimited_list
-    label: DNS nameservers
-    description: dns_nameservers=8.8.8.8,8.8.4.4
-
-  bastion_infra:
-    type: string
-    description: Adresse IP du l’infra PI utilisé pour la dataprep
-    default: 10.228.245.5
-
-  image_id:
+  image_name:
     type: string
     description: Glance Image
-    default: "debian10-mi-20200212"
+    default: Debian 9
 
   instance_type:
     type: string
     description: Flavor
-    default: z2.standard-pi-4.16
+    default: s1-2
 
   volume_size:
     type: string
@@ -50,24 +40,6 @@ parameters:
     description: Type du volume de données du serveur de preprop
     default: vsa-z3
 
-  availability_zone_1:
-    type: string
-    default: "AZ1"
-
-  no_proxy:
-    type: string
-    label: no_proxy variable
-    default: ""
-  http_proxy:
-    type: string
-    hidden: true
-    label: http_proxy variable
-    default: ""
-  https_proxy:
-    type: string
-    hidden: true
-    label: https_proxy variable
-    default: ""
   os_auth_token:
     type: string
     label: openstack OS_AUTH_TOKEN
@@ -87,11 +59,11 @@ parameters:
     label: swift data_storage
   data_storage_token:
     type: string
-    label: openstack token
+    label: an openstack token
 
   wait_condition_timeout:
     type: number
-    default: 2400
+    default: 24000
     description : >
       timeout for the Wait Conditions
 
@@ -110,85 +82,21 @@ resources:
       timeout: {get_param: wait_condition_timeout}
 
 
-#####################################################################
-##                                                                 ##
-## DEFINITION DES RESEAUX                                          ##
-##                                                                 ##
-#####################################################################
-  dev_server_network:
-    type: OS::Neutron::Net
-    properties:
-      name: presentation
 
-  dev_server_subnet:
-    type: OS::Neutron::Subnet
-    properties:
-      network_id: { get_resource: dev_server_network }
-      allocation_pools:
-      - {start: 192.168.1.20, end: 192.168.1.250}
-      cidr: 192.168.1.0/24
-      gateway_ip: 192.168.1.254
-      dns_nameservers: { get_param: dns_nameservers }
-      ip_version: 4
-
-
-#####################################################################
-##                                                                 ##
-## DEFINITION DU ROUTEUR                                           ##
-##                                                                 ##
-#####################################################################
-  router:
-    type: OS::Neutron::Router
-    properties:
-      name: routeur
-      external_gateway_info:
-        network: { get_param: public_network }
-
-  router_interface:
-    type: OS::Neutron::RouterInterface
-    properties:
-      router_id: { get_resource: router }
-      subnet: { get_resource: dev_server_subnet }
-#####################################################################
-##                                                                 ##
-## DEFINITION DU REGLES DE SECURITE                                ##
-##                                                                 ##
-#####################################################################
-  dev_server_secgroup:
-    type: OS::Neutron::SecurityGroup
-    properties:
-      description: Presentation security group
-      rules:
-        - remote_ip_prefix: "0.0.0.0/0"
-          protocol: tcp
-          port_range_min: 443
-          port_range_max: 443
-          direction: ingress
-        - remote_ip_prefix: "0.0.0.0/0"
-          protocol: tcp
-          port_range_min: 80
-          port_range_max: 80
-          direction: ingress
-        - remote_ip_prefix: { get_param: bastion_infra }
-          protocol: tcp
-          port_range_min: 22
-          port_range_max: 22
-          direction: ingress
 #####################################################################
 ##                                                                 ##
 ## DEFINITION DU SERVEUR                                           ##
 ##                                                                 ##
 #####################################################################
-  dev_server:
+  mdr_server:
     type: OS::Nova::Server
     properties:
       name: dev_server
       flavor: { get_param: instance_type }
-      availability_zone: { get_param: availability_zone_1 }
       key_name: { get_param: key_name }
-      block_device_mapping: [{ device_name: "vda", volume_id : { get_resource : volume }, delete_on_termination : "true" }]
+      image: { get_param: image_name }
       networks:
-        - port: { get_resource: port }
+        - port: { get_resource: server_port}
       user_data_format: RAW
       user_data: { get_resource: postinstall_dev_server }
 
@@ -197,7 +105,6 @@ resources:
     properties:
       parts:
         - config: { get_resource: included_files }
-        - config: { get_resource: data_volume_attachment }
         - config: { get_resource: configure_dev_server }
         - config: { get_resource: back_postconf }
         - config: { get_resource: postinstall }
@@ -211,19 +118,9 @@ resources:
         - path: /home/debian/common_functions.sh
           permissions: 0700
           content:
-            str_replace:
               params:
                 $wc_notify: {get_attr: [wait_handle, curl_cli]}
               template: { get_file: config-scripts/common_functions.sh }
-        - path: /home/debian/.gitconfig
-          owner: debian:debian
-          permissions: 0600
-          content:
-            str_replace:
-              params:
-                $http_proxy: { get_param: http_proxy }
-                $https_proxy: { get_param: https_proxy }
-              template: { get_file: config-scripts/.gitconfig }
         - path: /home/debian/launch.sh
           owner: debian:debian
           permissions: 0700
@@ -250,10 +147,6 @@ resources:
               params:
                 $os_auth_token: { get_param: os_auth_token }
                 $os_storage_url: { get_param: os_storage_url }
-                $http_proxy: { get_param: http_proxy }
-                $https_proxy: { get_param: https_proxy }
-                $no_proxy: { get_param: no_proxy }
-
               template: { get_file: config-scripts/openrc.sh }
 
   back_postconf:
@@ -261,11 +154,7 @@ resources:
     properties:
       group: ungrouped
       config:
-        str_replace:
-          template: { get_file: config-scripts/back_postconf.sh }
-          params:
-            $no_proxy: { get_param: no_proxy }
-            $dns_nameservers: { get_param: dns_nameservers }
+        get_file: config-scripts/back_postconf.sh
 
   postinstall:
     type: "OS::Heat::SoftwareConfig"
@@ -273,63 +162,52 @@ resources:
     properties:
       group: ungrouped
       config:
-        str_replace:
-          template: { get_file: config-scripts/post_install.sh }
-          params:
-            $no_proxy: { get_param: no_proxy }
+        get_file: config-scripts/post_install.sh
 
-  data_volume_attachment:
-    type: "OS::Heat::SoftwareConfig"
+  my_attachment:
+      type: OS::Cinder::VolumeAttachment
+      properties:
+        instance_uuid:  { get_resource: mdr_server }
+        volume_id: { get_param: data_volume_id }
+        mountpoint: /dev/vdb
+
+  heat_network:
+    type: OS::Neutron::Net
     properties:
-      group: ungrouped
-      config:
-        str_replace:
-          template: { get_file: config-scripts/data_volume_attachment.sh }
-          params:
-            $volume_id: { get_param: data_volume_id }
+      admin_state_up: true
+      name: heat_network
 
-
-  volume:
-    type: OS::Cinder::Volume
+  heat_network_subnet:
+    type: OS::Neutron::Subnet
     properties:
-      name: volume
-      size: { get_param: volume_size }
-      image: { get_param: image_id }
-      volume_type: { get_param: volume_type }
+      network: { get_resource: heat_network }
+      cidr: "10.1.1.0/24"
+      dns_nameservers: ["8.8.8.8"]
+      gateway_ip: "10.1.1.1"
+      ip_version: 4
 
-  volume_attachment:
-    type: OS::Cinder::VolumeAttachment
-    properties:
-      volume_id: { get_param: data_volume_id }
-      instance_uuid: { get_resource: dev_server }
-
-
-  port:
+  server_port:
     type: OS::Neutron::Port
     properties:
-      network: { get_resource: dev_server_network }
-      security_groups:
-        - { get_resource: dev_server_secgroup }
+      network: { get_resource: heat_network }
       fixed_ips:
-        - subnet_id: { get_resource: dev_server_subnet }
+        - subnet_id: { get_resource: heat_network_subnet }
 
-  dev_server_floating_ip:
+  server_public_ip:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network: { get_param: public_network }
 
-  association:
-    type: OS::Nova::FloatingIPAssociation
+  server_ip_assoc:
+    type: OS::Neutron::FloatingIPAssociation
     properties:
-      floating_ip: { get_resource: dev_server_floating_ip }
-      server_id: { get_resource: dev_server }
+      floatingip_id: { get_resource: server_public_ip }
+      port_id: { get_resource: server_port }
 
 outputs:
-
-  dev_server_floating_ip:
-    description: adresse IP publique du serveur de dataprep
-    value: { get_attr: [ dev_server_floating_ip, floating_ip_address ] }
-
   dev_server:
     description: Name of the server
-    value: { get_attr: [ dev_server, name ] }
+    value: { get_attr: [ mdr_server, name ] }
+  server_public_ip:
+    description: IP Address of the deployed heat_server instance
+    value: { get_attr: [ server_public_ip, floating_ip_address ]}

@@ -19,10 +19,6 @@ TODO: Créer un bastion pour le projet.
  - Téléchargez à la racine le fichier openrc.sh du projet.
  - Ajoutez à ce fichier les exports :
  ```export BASTION_INFRA_IP="ip_bastion"
- export OS_HTTP_PROXY="http://username:passwd@ip_proxy:port"
- export OS_HTTPS_PROXY="http://username:passwd@ip_proxy:port"
- export OS_NO_PROXY="..."
- export DNS_SERVERNAME="ip1,ip2,..."
  export DATA_VOLUME_ID="id"
  ```
  - Sourcez le fichier: `source openrc.sh`

@@ -1,8 +1,0 @@
-[http]
-	proxyAuthMethod = basic
-	sslVerify = false
-	proxy = $http_proxy
-[https]
-	proxyAuthMethod = basic
-	sslVerify = false
-	proxy = $https_proxy
