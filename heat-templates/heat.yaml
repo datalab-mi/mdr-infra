@@ -63,7 +63,7 @@ parameters:
 
   wait_condition_timeout:
     type: number
-    default: 24000
+    default: 43200
     description : >
       timeout for the Wait Conditions
 
@@ -96,7 +96,7 @@ resources:
       key_name: { get_param: key_name }
       image: { get_param: image_name }
       networks:
-        - port: { get_resource: server_port}
+        - network: { get_param: public_network }
       user_data_format: RAW
       user_data: { get_resource: postinstall_dev_server }
 
@@ -171,43 +171,11 @@ resources:
         volume_id: { get_param: data_volume_id }
         mountpoint: /dev/vdb
 
-  heat_network:
-    type: OS::Neutron::Net
-    properties:
-      admin_state_up: true
-      name: heat_network
-
-  heat_network_subnet:
-    type: OS::Neutron::Subnet
-    properties:
-      network: { get_resource: heat_network }
-      cidr: "10.1.1.0/24"
-      dns_nameservers: ["8.8.8.8"]
-      gateway_ip: "10.1.1.1"
-      ip_version: 4
-
-  server_port:
-    type: OS::Neutron::Port
-    properties:
-      network: { get_resource: heat_network }
-      fixed_ips:
-        - subnet_id: { get_resource: heat_network_subnet }
-
-  server_public_ip:
-    type: OS::Neutron::FloatingIP
-    properties:
-      floating_network: { get_param: public_network }
-
-  server_ip_assoc:
-    type: OS::Neutron::FloatingIPAssociation
-    properties:
-      floatingip_id: { get_resource: server_public_ip }
-      port_id: { get_resource: server_port }
-
 outputs:
-  dev_server:
+  mdr_server:
     description: Name of the server
     value: { get_attr: [ mdr_server, name ] }
-  server_public_ip:
-    description: IP Address of the deployed heat_server instance
-    value: { get_attr: [ server_public_ip, floating_ip_address ]}
+
+  mdr_server_ip:
+    description: Name of the server
+    value: { get_attr: [mdr_server, networks, { get_param: public_network }, 0] }
