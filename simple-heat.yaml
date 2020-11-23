@@ -1,5 +1,4 @@
 heat_template_version: 2016-04-08
-
 description: Simple template to deploy a single compute instance with an attached volume
 
 parameters:
@@ -50,10 +49,8 @@ resources:
     type: OS::Heat::MultipartMime
     properties:
       parts:
-      - config: {get_resource: included_files}
+      - config: {get_resource: common_functions}
       - config: {get_resource: one_init}
-      - config: {get_resource: two_init}
-      - config: { get_resource: data_volume_attachment }
 
   one_init:
     type: OS::Heat::CloudConfig
@@ -63,7 +60,7 @@ resources:
         - path: /tmp/one
           content: "The one is bar"
 
-  two_init:
+  common_functions:
     type: "OS::Heat::CloudConfig"
     properties:
       cloud_config:
@@ -78,11 +75,11 @@ resources:
                 $data_storage: "token"
               template: { get_file: heat-templates/config-scripts/common_functions.sh }
 
-  included_files:
+  not_working:
     type: "OS::Heat::CloudConfig"
     properties:
       cloud_config:
-        merge_how: dict(recurse_array)+list(append)
+        merge_how: 'dict(recurse_array,no_replace)+list(append)'
         write_files:
         - path: /home/debian/back_postconf.sh
           permissions: 0700
@@ -91,7 +88,7 @@ resources:
               params:
                 $data_storage: "token"
               template: { get_file: heat-templates/config-scripts/back_postconf.sh }
-        - path: /home/debian/launch.sh
+        - path: /home/debian/post_install.sh
           owner: debian:debian
           permissions: 0700
           content:
@@ -100,7 +97,8 @@ resources:
                 $data_storage: "token"
                 $data_storage_token: "token"
                 $app_version: "dev"
-              template: { get_file: heat-templates/config-scripts/launch.sh }
+              template: { get_file: heat-templates/config-scripts/post_install.sh }
+
 
   data_volume_attachment:
     type: "OS::Heat::SoftwareConfig"
