@@ -1,4 +1,5 @@
 heat_template_version: 2016-04-08
+
 description: Simple template to deploy a single compute instance with an attached volume
 
 parameters:
@@ -13,10 +14,15 @@ parameters:
     description: Size of the volume
     default: 4
 
-  partition_name:
+  volume_id:
     type: string
     description: partition name
-    default: "/dev/sdb1"
+    default: "1d64fdfd-8480-4513-a212-27ed3cef3d65"
+
+  os_auth_token:
+    type: string
+    label: openstack OS_AUTH_TOKEN
+    default: token
 
 resources:
 
@@ -49,8 +55,11 @@ resources:
     type: OS::Heat::MultipartMime
     properties:
       parts:
-      - config: {get_resource: common_functions}
       - config: {get_resource: one_init}
+      - config: {get_resource: common_functions}
+      - config: {get_resource: launch}
+      - config: {get_resource: openrc}
+      - config: {get_resource: data_volume_attachment}
 
   one_init:
     type: OS::Heat::CloudConfig
@@ -68,36 +77,42 @@ resources:
         write_files:
         - path: /home/debian/common_functions.sh
           owner: debian:debian
-          permissions: 0600
+          permissions: 0700
           content:
             str_replace:
               params:
                 $data_storage: "token"
               template: { get_file: heat-templates/config-scripts/common_functions.sh }
 
-  not_working:
+  launch:
     type: "OS::Heat::CloudConfig"
     properties:
       cloud_config:
-        merge_how: 'dict(recurse_array,no_replace)+list(append)'
+        merge_how: dict(recurse_array)+list(append)
         write_files:
-        - path: /home/debian/back_postconf.sh
-          permissions: 0700
-          content:
-            str_replace:
-              params:
-                $data_storage: "token"
-              template: { get_file: heat-templates/config-scripts/back_postconf.sh }
-        - path: /home/debian/post_install.sh
+        - path: /home/debian/launch.sh
           owner: debian:debian
           permissions: 0700
           content:
             str_replace:
               params:
                 $data_storage: "token"
-                $data_storage_token: "token"
-                $app_version: "dev"
-              template: { get_file: heat-templates/config-scripts/post_install.sh }
+              template: { get_file: heat-templates/config-scripts/launch.sh }
+
+  openrc:
+    type: "OS::Heat::CloudConfig"
+    properties:
+      cloud_config:
+        merge_how: dict(recurse_array)+list(append)
+        write_files:
+        - path: /home/debian/.openrc.sh
+          owner: debian:debian
+          permissions: 0600
+          content:
+            str_replace:
+              params:
+                $os_auth_token: { get_param: os_auth_token }
+              template: { get_file: heat-templates/config-scripts/openrc.sh }
 
 
   data_volume_attachment:
@@ -108,20 +123,14 @@ resources:
         str_replace:
           template: { get_file: heat-templates/config-scripts/data_volume_attachment.sh }
           params:
-            $partition_name: { get_param: partition_name }
+            $volume_id: { get_param: volume_id }
 
-  my_volume:
-    type: OS::Cinder::Volume
-    properties:
-      size: { get_param: size_gb }
-      name: test_volume
 
   my_attachment:
       type: OS::Cinder::VolumeAttachment
       properties:
         instance_uuid:  { get_resource: my_instance }
-        volume_id: { get_resource: my_volume }
-        mountpoint: /dev/vdb
+        volume_id: { get_param: volume_id }
 
 outputs:
   my_instance:
