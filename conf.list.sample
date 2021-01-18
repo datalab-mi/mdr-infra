@@ -1,0 +1,4 @@
+export openstack_args=
+export stack_name=mdr
+export keyname=mdr
+export heat_template=heat

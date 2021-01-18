@@ -20,9 +20,8 @@ apt-get -q update
 apt-get -qy install curl
 apt-get -y install git
 apt-get -qy install python-pip
+apt-get -qy install python3-venv
 #pip install python-swiftclient
-
-sudo apt-get -y --allow-unauthenticated install docker-ce
 
 echo "## ajout debian au groupe docker"
 usermod -aG docker debian

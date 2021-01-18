@@ -9,7 +9,7 @@ trap clean EXIT QUIT KILL
 libdir=/home/debian
 [ -f ${libdir}/common_functions.sh ] && source ${libdir}/common_functions.sh
 
-volume_id="$volume_id"
+volume_id="$data_volume_id"
 if [ -z "${volume_id}" ] ; then
  echo "SKIP: $(basename $0) No volume id detected"
  exit 0
@@ -39,5 +39,6 @@ if ! /sbin/blkid -t TYPE=ext4 "${volume_dev}" ; then
 fi
 
 mkdir -pv /data
+chown debian /data -R
 echo "${volume_dev} /data ext4 defaults 1 2" >> /etc/fstab
 mount /data

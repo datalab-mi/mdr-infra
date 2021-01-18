@@ -1,17 +1,15 @@
 parameter_defaults:
   key_name: mdr
   public_network: Ext-Net
-  bastion_infra: "$BASTION_INFRA_IP"
   volume_type: vsa-z2
-  image_name: Debian 9 #"debian9-mi-20200212" #"debian10-mi-20200609"
-  instance_type: s1-2 #z2.standard-pi-4.8
+  image_name: Debian 10 - Docker #"debian9-mi-20200212" #"debian10-mi-20200609"
+  flavor: s1-4 #z2.standard-pi-4.8
   # secret
   os_storage_url: "$OS_STORAGE_URL"
   os_auth_token: "$OS_AUTH_TOKEN"
 
   data_volume_id: "$DATA_VOLUME_ID"
-
   data_storage: storage
   data_storage_token: token
 
-  app_version: dev
+  git_tag: "$git_tag"

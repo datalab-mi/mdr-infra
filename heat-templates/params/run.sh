@@ -1,7 +1,7 @@
 #!/bin/bash
-
+echo "RUN"
+/bin/bash get_token.sh
 set -e
-
 # Set token
 export OS_AUTH_TOKEN=$(/bin/bash get_token.sh)
 echo "$OS_AUTH_TOKEN"
