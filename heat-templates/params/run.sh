@@ -1,10 +1,11 @@
 #!/bin/bash
 echo "RUN"
+echo "$OS_AUTH_URL"
 /bin/bash get_token.sh
 set -e
 # Set token
 export OS_AUTH_TOKEN=$(/bin/bash get_token.sh)
-echo "$OS_AUTH_TOKEN"
+echo "auth token is :$OS_AUTH_TOKEN"
 
 if [ -z "$OS_AUTH_TOKEN" ]; then exit; fi
 # populate parameters.yaml
